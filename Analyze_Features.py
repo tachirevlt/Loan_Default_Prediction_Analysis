@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 from scipy.stats import chi2_contingency, pointbiserialr
 
-def analyze_features(X, y, max_plots=5):
+def analyze_features(X, y, max_plots=10):
     """
     Phân tích đặc trưng (numeric & categorical) và sự tương quan với target (nhị phân).
     
@@ -18,41 +18,44 @@ def analyze_features(X, y, max_plots=5):
         Số lượng plot tối đa mỗi loại (tránh vẽ quá nhiều nếu dữ liệu nhiều cột)
     """
     
-    # Tách numeric & categorical
-    numeric_features = X.select_dtypes(include=['int64', 'float64'])
-    categorical_features = X.select_dtypes(include=['object', 'category'])
+
+    numeric_features = X.select_dtypes(include=[np.number]).columns
+    categorical_features = X.select_dtypes(include=[object]).columns
     
     print("======== 1. Numeric Features vs Target ========")
-    for i, col in enumerate(numeric_features.columns[:max_plots]):
-        # Boxplot
-        plt.figure(figsize=(6,4))
-        sns.boxplot(x=y, y=X[col])
-        plt.title(f"Boxplot {col} theo Target")
-        plt.show()
-        
-        # Correlation
+    numeric_correlations = []
+    for col in numeric_features[:max_plots]:
         corr, p = pointbiserialr(X[col], y)
-        print(f"{col}: Point Biserial Corr = {corr:.5f}, p-value = {p:.10f}")
+        numeric_correlations.append([col, f"{corr:.5f}", f"{p:.10f}" if p < 1e-308 else f"< 1e-308 (underflow)"])
+    print(pd.DataFrame(numeric_correlations, columns=["", "corr", "p-value"]).to_string(index=False))
     
     print("\n======== 2. Categorical Features vs Target ========")
-    for i, col in enumerate(categorical_features.columns[:max_plots]):
-        # Countplot
-        plt.figure(figsize=(6,4))
-        sns.countplot(x=X[col], hue=y)
-        plt.title(f"Phân phối {col} theo Target")
-        plt.xticks(rotation=30)
-        plt.show()
-        
-        # Chi-square
+    categorical_correlations = []
+    for col in categorical_features[:max_plots]:
         ct = pd.crosstab(X[col], y)
         chi2, p, dof, ex = chi2_contingency(ct)
-        print(f"{col}: Chi-square test p-value = {p:.10f}")
+        categorical_correlations.append([col, f"{p:.10f}"])
+    print(pd.DataFrame(categorical_correlations, columns=["", "p-value"]).to_string(index=False))
     
-    print("\n======== 3. Correlation Heatmap (Numeric) ========")
-    if len(numeric_features.columns) > 1:
-        plt.figure(figsize=(10,8))
-        sns.heatmap(numeric_features.corr(), annot=True, cmap="coolwarm", fmt=".2f")
-        plt.title("Correlation Heatmap giữa các Numeric features")
-        plt.show()
-    else:
-        print("Không đủ numeric features để vẽ heatmap.")
+
+    print("\n======== 3. Visualization ========")
+    n_numeric = min(len(numeric_features), max_plots)
+    n_categorical = min(len(categorical_features), max_plots)
+    n_plots = n_numeric + n_categorical
+    
+    fig, axes = plt.subplots(nrows=4, ncols=max(1, (n_plots + 3) // 4), figsize=(15, 12))
+    axes = axes.flatten()
+    
+    for idx, col in enumerate(numeric_features[:max_plots]):
+        sns.histplot(data=X, x=col, ax=axes[idx])
+        axes[idx].set_title(col)
+    
+    for idx, col in enumerate(categorical_features[:max_plots]):
+        sns.histplot(data=X, x=col, ax=axes[n_numeric + idx] if n_numeric + idx < len(axes) else axes[0])
+        axes[n_numeric + idx].set_title(col) if n_numeric + idx < len(axes) else axes[0].set_title(col)
+    
+    for idx in range(n_plots, len(axes)):
+        fig.delaxes(axes[idx])
+    
+    plt.tight_layout()
+    plt.show()
