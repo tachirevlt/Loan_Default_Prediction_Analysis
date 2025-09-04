@@ -53,7 +53,7 @@ Dự án này tập trung vào việc phân tích dữ liệu tín dụng và x�
 ## Cách Sử dụng
 1. Clone repository:
    ```bash
-   git clone <repository-url>
+   git clone <https://github.com/tachirevlt/Loan_Default_Prediction_Analysis>
    ```
 2. Cài đặt các thư viện cần thiết (xem phần Cài đặt).
 3. Chạy file chính (ví dụ: `main.py`) để thực hiện toàn bộ quy trình.
