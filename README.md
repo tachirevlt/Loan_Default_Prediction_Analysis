@@ -68,6 +68,3 @@ Dự án này tập trung vào việc phân tích dữ liệu tín dụng và x�
 
 ## Cảm ơn
 Cảm ơn đã sử dụng dự án này! Nếu có câu hỏi hoặc đóng góp, vui lòng mở issue trên GitHub hoặc liên hệ trực tiếp.
-```
-
----
